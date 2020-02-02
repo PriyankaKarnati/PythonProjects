@@ -1,1 +1,71 @@
 
+import requests
+import pprint
+from bs4 import BeautifulSoup
+import time
+
+def getSoup(URL):
+  """this function returns soup element"""
+  start = time.time() 
+  page = requests.get(URL)
+  end = time.time()
+  print("response time :",end-start)  
+  soup = BeautifulSoup(page.content,'html.parser')
+  return soup
+
+def createGoString(name):
+  """this function created appropriate google url"""
+  st = name.split(' ')
+  aug=""
+  for i in st:
+    aug+=i
+    aug+='+'
+  return aug
+
+def getURL(name):
+  """this function returns imdb url from google search string"""
+  actString = createGoString(name)
+  gURL="https://www.google.com/search?q={}tv+series".format(actString)
+  print("google web page-")
+  soup = getSoup(gURL)
+  results = soup.find(id='main')
+  job_ele = results.find_all('div',class_='Ap5OSd')
+  for j1 in job_ele:
+    links = j1.find_all('a')
+    imdbS=""
+    for tag in links:
+      k1 = tag.get('href')
+      if k1 is not None:
+        if (k1.find('imdb') != -1):
+          #print(k1)
+          imdbS=k1[7:]
+          po = imdbS.find('&')
+          #print(po)
+          imdbS = imdbS[:po]
+          #print(imdbS)
+          break 
+  return imdbS+'episodes'
+
+def getEpisode(URL):
+  """return episode name"""
+  print("IMDB web page-")
+  soup = getSoup(URL)
+  results = soup.find(id='main')
+  # print(results)
+  job_ele = results.find_all('div',class_='list detail eplist')
+  ans=""
+  title=[]
+  date=[]
+  """get all the episodes names and air dates"""
+  for j1 in job_ele:
+    title = j1.find_all('a',itemprop="name")
+    date = j1.find_all('div',class_='airdate')
+  ans = title[-1].text.strip()+' aired on '+date[-1].text.strip()
+  return ans
+
+tvS= input("Enter a tv series name : ")
+#get imdb url from google
+iURL = getURL(tvS)
+#get episode name from imdb website
+hi = getEpisode(iURL)
+print("The last episode until now is : "+hi)
